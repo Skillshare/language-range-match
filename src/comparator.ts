@@ -22,8 +22,8 @@ export type RangeStrictMatchesTag = (basicRange: LanguageRange, tag: LanguageTag
 
 export const basicRangeStrictMatchesTag: RangeStrictMatchesTag = (basicRange: LanguageRange, tag: LanguageTag): boolean => {
     if (basicRange === WILDCARD) return true;
-    let downShiftedRange = basicRange.toLowerCase();
-    let downShiftedTag = tag.toLowerCase();
+    const downShiftedRange = basicRange.toLowerCase();
+    const downShiftedTag = tag.toLowerCase();
     return downShiftedRange === downShiftedTag;
 }
 
@@ -38,8 +38,8 @@ export type RangeContainsTag = (basicRange: LanguageRange, tag: LanguageTag)=> b
 
 export const basicRangeContainsTag: RangeContainsTag = (basicRange: LanguageRange, tag: LanguageTag): boolean => {
     if (basicRange === WILDCARD) return true;
-    let downShiftedRange = basicRange.toLowerCase();
-    let downShiftedTag = tag.toLowerCase();
+    const downShiftedRange = basicRange.toLowerCase();
+    const downShiftedTag = tag.toLowerCase();
     if (downShiftedRange === downShiftedTag) return true;
     return downShiftedTag.startsWith(downShiftedRange) && 
         downShiftedTag.length > downShiftedRange.length &&
@@ -49,11 +49,11 @@ export const basicRangeContainsTag: RangeContainsTag = (basicRange: LanguageRang
 
 export const extendedRangeContainsTag: RangeContainsTag = (extendedRange: LanguageRange, tag: LanguageTag): boolean => {
     if(extendedRange === WILDCARD) return true;
-    let downShiftedRange = extendedRange.toLowerCase();
-    let downShiftedTag = tag.toLowerCase();
+    const downShiftedRange = extendedRange.toLowerCase();
+    const downShiftedTag = tag.toLowerCase();
     if (downShiftedRange === downShiftedTag) return true;
-    let rangeSubTags = getSubTags(downShiftedRange);
-    let tagSubTags = getSubTags(downShiftedTag);
+    const rangeSubTags = getSubTags(downShiftedRange);
+    const tagSubTags = getSubTags(downShiftedTag);
     let valid = true;
     let rangeIdx = 0; let tagIdx = 0;
     //3.3.2.4
