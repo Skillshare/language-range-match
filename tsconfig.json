@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-      "target": "esnext",
+      "module": "commonjs",
+      "target": "es2017",
       "lib": ["esnext"],
       "skipLibCheck": true,
       "esModuleInterop": true,
       "allowSyntheticDefaultImports": true,
       "strict": true,
       "forceConsistentCasingInFileNames": true,
-      "module": "esnext",
       "moduleResolution": "node",
       "resolveJsonModule": true,
       "outDir": "lib",
       //"isolatedModules": true,
       "jsx": "react"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/__tests__/*"]
 }
