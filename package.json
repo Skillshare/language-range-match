@@ -1,6 +1,6 @@
 {
 	"name": "language-range-match",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Matches accepted language ranges to supported locales following rfc4647",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
@@ -8,8 +8,7 @@
 	"scripts": {
 		"build": "yarn clean && tsc --declaration",
 		"clean": "rm -rf ./lib/",
-		"test": "jest --config jestconfig.json",
-		"prepublish": "yarn build"
+		"test": "jest --config jestconfig.json"
 	},
 	"devDependencies": {
 		"@types/jest": "^27.4.0",
