@@ -6,4 +6,7 @@ export type LanguageTag = string;
 
 export type SupportedTags = LanguageTag[];
 
-export type MatchingTag = LanguageTag;
+export type Match = {
+    matchedRange: LanguageRange;
+    matchingTag: LanguageTag;
+};
