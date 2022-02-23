@@ -9,6 +9,11 @@ const WILDCARD = '*';
  *  3. zh-Hant-CN
  *  4. zh-Hant
  *  5. zh
+ *
+ *  E.x. Cascade for de-*-1991
+ *  1. de-*-1991
+ *  2. de-*
+ *  3. de
  */
 export const buildCascadeForBasicRange = (basicRange: LanguageRange): LanguageRange[] => {
     let subTags = getSubTags(basicRange);
@@ -16,7 +21,8 @@ export const buildCascadeForBasicRange = (basicRange: LanguageRange): LanguageRa
         return [basicRange];
     }
     subTags.pop();
-    while (subTags[subTags.length - 1].length === 1) {
+    //Wildcards are the only allowed 'single character'
+    while (subTags[subTags.length - 1].length === 1 && subTags[subTags.length - 1] !== WILDCARD) {
         subTags.pop();
     }
     return [basicRange, ...buildCascadeForBasicRange(subTags.join('-'))];
@@ -63,6 +69,14 @@ export const basicRangeContainsTag: RangeContainsTag = (basicRange: LanguageRang
 };
 
 export const extendedRangeContainsTag: RangeContainsTag = (extendedRange: LanguageRange, tag: LanguageTag): boolean => {
+    return extendedRangeMatchesTag(extendedRange, tag, true);
+};
+
+export const extendedRangeMatchesTag = (
+    extendedRange: LanguageRange,
+    tag: LanguageTag,
+    allowTagSubSets: boolean,
+): boolean => {
     if (extendedRange === WILDCARD) {
         return true;
     }
@@ -118,14 +132,32 @@ export const extendedRangeContainsTag: RangeContainsTag = (extendedRange: Langua
         tagIdx++;
         continue;
     }
+
+    let remainingTagSubTags = tagSubTags.length - tagIdx;
+    if (!allowTagSubSets) {
+        //If by the time we process through the range, we have not processed all the way through the tag, then the tag must be a subset (see above) of the range.
+        //The only exception to this is ranges ending in *, where we allow 1 remaining subtag so that the tag ends align.
+        if (downShiftedRange.endsWith('*') && remainingTagSubTags > 1) {
+            valid = false;
+        }
+
+        if (!downShiftedRange.endsWith('*') && remainingTagSubTags > 0) {
+            valid = false;
+        }
+    }
+
+    if (!allowTagSubSets && tagIdx < tagSubTags.length && !downShiftedRange.endsWith('*')) {
+        valid = false;
+    }
+
     return valid;
 };
 
-const areSubTagsEqual = (rangeSubTag: LanguageTag, tagSubTag: LanguageTag): boolean => {
+const areSubTagsEqual = (rangeSubTag: LanguageTag, tagSubTag: LanguageTag, allowRangeWildcard = true): boolean => {
     if (!rangeSubTag || !tagSubTag) {
         return false;
     }
-    return rangeSubTag === WILDCARD || rangeSubTag.toLowerCase() === tagSubTag.toLowerCase();
+    return (allowRangeWildcard && rangeSubTag === WILDCARD) || rangeSubTag.toLowerCase() === tagSubTag.toLowerCase();
 };
 
 const getSubTags = (tag: string): string[] => {

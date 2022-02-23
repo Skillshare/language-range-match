@@ -29,3 +29,18 @@ Huge thanks to https://github.com/wooorm for conceptual help and test cases.
   //   matchingTag: 'zh-Hant'
   // }
 ```
+
+## Caveats
+
+-   Any ranges not matching the regexp for the corresponding range type will be ignored. Keep in mind basic ranges are
+    valid extended ranges but extended ranges are not always valid basic ranges.
+    -   Basic range RegExp: `/^(\*|([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})\*))$/`
+    -   Extended range RegExp: `/^([a-zA-Z]{1,8}|\*)(-([a-zA-Z0-9]{1,8}|\*))*$/`
+-   The RFC does not provide explicit requirements for lookup on extended ranges. Our implementation makes the following
+    decisions:
+    -   The full wildcard tag is invalid and skipped.
+    -   Wildcards as subtags are valid. Wildcards in all positions **except the last subtag** may encompass multiple
+        subtags. Wildcards in the last position may encompass one subtag.
+    -   Wildcards in the first subtag are valid, but will never be considered in isolation as we strip subtags off the
+        range.
+        -   For example, the range `*-GB` would match the tag `en-GB` but not `en`.
