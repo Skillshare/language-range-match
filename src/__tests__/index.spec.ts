@@ -1,4 +1,4 @@
-import { basicFilter, basicLookup, extendedFilter } from '..';
+import { basicFilter, basicLookup, extendedFilter, extendedLookup } from '..';
 
 describe('Range Matchers', () => {
     describe('Basic Filter', () => {
@@ -86,8 +86,6 @@ describe('Range Matchers', () => {
     });
 
     describe('Basic Lookup', () => {
-        //[['de-CH', 'fr-CH', 'it-CH'], '*-CH', 'de-CH']
-        //Not included since this is restricted to basic ranges.
         it.each`
             supportedTags                                        | acceptedRanges                        | matchedTag
             ${['de-de']}                                         | ${undefined}                          | ${undefined}
@@ -106,4 +104,33 @@ describe('Range Matchers', () => {
             expect(basicLookup(supportedTags, acceptedRanges)).toEqual(matchedTag);
         });
     });
+    describe('Extended Lookup', () => {
+        it.each`
+            supportedTags                                        | acceptedRanges                        | matchedTag
+            ${['de-de']}                                         | ${undefined}                          | ${undefined}
+            ${['de-de']}                                         | ${['*']}                              | ${undefined}
+            ${['de-DE']}                                         | ${['*']}                              | ${undefined}
+            ${['de']}                                            | ${['*', 'de']}                        | ${{ matchedRange: 'de', matchingTag: 'de' }}
+            ${['en-GB']}                                         | ${['de-CH']}                          | ${undefined}
+            ${['en-GB', 'de-CH-1996']}                           | ${['de-CH']}                          | ${undefined}
+            ${['en-GB', 'de-CH']}                                | ${['de-CH']}                          | ${{ matchedRange: 'de-CH', matchingTag: 'de-CH' }}
+            ${['en-GB', 'de']}                                   | ${['de-CH']}                          | ${{ matchedRange: 'de-CH', matchingTag: 'de' }}
+            ${['en-GB', 'en', 'ja-JP', 'ja']}                    | ${['fr-FR', 'zh-Hant']}               | ${undefined}
+            ${['en-GB', 'en', 'zh-Hans', 'zh-Hant', 'zh']}       | ${['fr-FR', 'zh-Hant']}               | ${{ matchedRange: 'zh-Hant', matchingTag: 'zh-Hant' }}
+            ${['en-GB', 'en', 'zh-Hans', 'zh-Hant', 'zh', 'fr']} | ${['fr-FR', 'zh-Hant']}               | ${{ matchedRange: 'fr-FR', matchingTag: 'fr' }}
+            ${['en-GB', 'en', 'zh-Hans', 'zh-Hant', 'zh', 'fr']} | ${['zh-Hant', 'fr-FR']}               | ${{ matchedRange: 'zh-Hant', matchingTag: 'zh-Hant' }}
+            ${['en-GB', 'en', 'zh-Hans', 'zh-Hant', 'zh']}       | ${['zh-Hant-CN-x-private1-private2']} | ${{ matchedRange: 'zh-Hant-CN-x-private1-private2', matchingTag: 'zh-Hant' }}
+            ${['de-ON', 'de-EX', 'de-CH', 'fr-CH', 'it-CH']}     | ${['*-CH']}                           | ${{ matchedRange: '*-CH', matchingTag: 'de-CH' }}
+            ${['de-CH-1991-after', 'de-CH-before-1991']}         | ${['de-*-1991']}                      | ${{ matchedRange: 'de-*-1991', matchingTag: 'de-CH-before-1991' }}
+            ${['en-AB-CD-1991', 'de-CH-1991']}                   | ${['de-*-1991']}                      | ${{ matchedRange: 'de-*-1991', matchingTag: 'de-CH-1991' }}
+            ${['en-CH-1991', 'de-CH']}                           | ${['de-*-1991']}                      | ${{ matchedRange: 'de-*-1991', matchingTag: 'de-CH' }}
+            ${['de-CH-1991-after', 'en-GB']}                     | ${['de-*-1991', '*-GB']}              | ${{ matchedRange: '*-GB', matchingTag: 'en-GB' }}
+        `('Selects correct lookup tag', ({ supportedTags, acceptedRanges, matchedTag }) => {
+            expect(extendedLookup(supportedTags, acceptedRanges)).toEqual(matchedTag);
+        });
+    });
 });
+
+/*
+
+            */

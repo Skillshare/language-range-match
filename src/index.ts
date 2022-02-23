@@ -3,10 +3,11 @@ import {
     basicRangeStrictMatchesTag,
     buildCascadeForBasicRange,
     extendedRangeContainsTag,
+    extendedRangeMatchesTag,
     RangeContainsTag,
 } from './comparator';
 import { LanguagePriorityRanges, Match, SupportedTags } from './model';
-import { isValidBasicRange } from './validators';
+import { isValidBasicRange, isValidExtendedRange } from './validators';
 
 export * from './model';
 
@@ -61,6 +62,36 @@ export const basicLookup: Lookup = (
                 return {
                     matchedRange: range,
                     matchingTag: matchingTag,
+                };
+            }
+        }
+    }
+
+    return undefined;
+};
+
+export const extendedLookup: Lookup = (
+    supportedTags: SupportedTags,
+    languageRanges: LanguagePriorityRanges,
+): Match | undefined => {
+    if (!languageRanges) {
+        return undefined;
+    }
+    //Early exit makes more sense here, so use vanilla for loop
+    for (let range of languageRanges) {
+        if (!range || !isValidExtendedRange(range) || range === WILDCARD) {
+            continue;
+        }
+        const cascadingRanges = buildCascadeForBasicRange(range);
+        for (let cascadingRange of cascadingRanges) {
+            if (cascadingRange === WILDCARD) {
+                continue;
+            }
+            const strictMatchingTag = supportedTags.find((tag) => extendedRangeMatchesTag(cascadingRange, tag, false));
+            if (strictMatchingTag) {
+                return {
+                    matchedRange: range,
+                    matchingTag: strictMatchingTag,
                 };
             }
         }
