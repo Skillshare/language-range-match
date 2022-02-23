@@ -5,27 +5,31 @@ import {
     extendedRangeContainsTag,
     RangeContainsTag,
 } from './comparator';
-import { LanguagePriorityRanges, MatchingTag, SupportedTags } from './model';
+import { LanguagePriorityRanges, Match, SupportedTags } from './model';
 import { isValidBasicRange } from './validators';
 
 export * from './model';
 
-export type Filter = (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges) => MatchingTag[];
+export type Filter = (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges) => Match[];
 
-export type Lookup = (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges) => MatchingTag | undefined;
+export type Lookup = (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges) => Match | undefined;
 
-const removeDupes = (matches: MatchingTag[]): MatchingTag[] => {
+const removeDupes = (matches: Match[]): Match[] => {
     return [...new Set(matches)];
 };
 
 const generateFilter = (matchFn: RangeContainsTag) => {
-    return (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges): MatchingTag[] => {
+    return (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges): Match[] => {
         if (!languageRanges) {
             return [];
         }
         const allMatches = languageRanges
             .map((range) => {
-                return supportedTags.filter((tag) => matchFn(range, tag));
+                let matchingTags = supportedTags.filter((tag) => matchFn(range, tag));
+                return matchingTags.map((matchingTag) => ({
+                    matchedRange: range,
+                    matchingTag: matchingTag,
+                }));
             })
             .reduce((prev, curr) => {
                 return prev.concat(curr);
@@ -41,7 +45,7 @@ export const extendedFilter: Filter = generateFilter(extendedRangeContainsTag);
 export const basicLookup: Lookup = (
     supportedTags: SupportedTags,
     languageRanges: LanguagePriorityRanges,
-): MatchingTag | undefined => {
+): Match | undefined => {
     if (!languageRanges) {
         return undefined;
     }
@@ -52,9 +56,12 @@ export const basicLookup: Lookup = (
         }
         const cascadingRanges = buildCascadeForBasicRange(range);
         for (let cascadingRange of cascadingRanges) {
-            const matchedTag = supportedTags.find((tag) => basicRangeStrictMatchesTag(cascadingRange, tag));
-            if (matchedTag) {
-                return matchedTag;
+            const matchingTag = supportedTags.find((tag) => basicRangeStrictMatchesTag(cascadingRange, tag));
+            if (matchingTag) {
+                return {
+                    matchedRange: range,
+                    matchingTag: matchingTag,
+                };
             }
         }
     }
