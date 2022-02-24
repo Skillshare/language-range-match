@@ -15,7 +15,7 @@ const WILDCARD = '*';
  *  2. de-*
  *  3. de
  */
-export const buildCascadeForBasicRange = (basicRange: LanguageRange): LanguageRange[] => {
+export const buildCascadeForRange = (basicRange: LanguageRange): LanguageRange[] => {
     let subTags = getSubTags(basicRange);
     if (subTags.length === 1) {
         return [basicRange];
@@ -25,7 +25,7 @@ export const buildCascadeForBasicRange = (basicRange: LanguageRange): LanguageRa
     while (subTags[subTags.length - 1].length === 1 && subTags[subTags.length - 1] !== WILDCARD) {
         subTags.pop();
     }
-    return [basicRange, ...buildCascadeForBasicRange(subTags.join('-'))];
+    return [basicRange, ...buildCascadeForRange(subTags.join('-'))];
 };
 
 export type RangeStrictMatchesTag = (basicRange: LanguageRange, tag: LanguageTag) => boolean;
@@ -42,6 +42,8 @@ export const basicRangeStrictMatchesTag: RangeStrictMatchesTag = (
     return downShiftedRange === downShiftedTag;
 };
 
+export type RangeTagComparator = (basicRange: LanguageRange, tag: LanguageTag) => boolean;
+
 /**
  * A range contains a tag if the tag is a subset of the range.
  *
@@ -49,9 +51,7 @@ export const basicRangeStrictMatchesTag: RangeStrictMatchesTag = (
  *
  * For example, the tag en-US is a subset of the range en
  */
-export type RangeContainsTag = (basicRange: LanguageRange, tag: LanguageTag) => boolean;
-
-export const basicRangeContainsTag: RangeContainsTag = (basicRange: LanguageRange, tag: LanguageTag): boolean => {
+export const basicRangeContainsTag: RangeTagComparator = (basicRange: LanguageRange, tag: LanguageTag): boolean => {
     if (basicRange === WILDCARD) {
         return true;
     }
@@ -68,8 +68,25 @@ export const basicRangeContainsTag: RangeContainsTag = (basicRange: LanguageRang
     );
 };
 
-export const extendedRangeContainsTag: RangeContainsTag = (extendedRange: LanguageRange, tag: LanguageTag): boolean => {
+/**
+ * A range contains a tag if the tag is a subset of the range.
+ *
+ * Note that conceptually this is the opposite of string subsets.
+ *
+ * For example, the tag en-US is a subset of the range en
+ */
+export const extendedRangeContainsTag: RangeTagComparator = (
+    extendedRange: LanguageRange,
+    tag: LanguageTag,
+): boolean => {
     return extendedRangeMatchesTag(extendedRange, tag, true);
+};
+
+export const extendedRangeStrictMatchesTag: RangeTagComparator = (
+    extendedRange: LanguageRange,
+    tag: LanguageTag,
+): boolean => {
+    return extendedRangeMatchesTag(extendedRange, tag, false);
 };
 
 export const extendedRangeMatchesTag = (

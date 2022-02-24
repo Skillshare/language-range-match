@@ -1,13 +1,13 @@
 import {
     basicRangeContainsTag,
     basicRangeStrictMatchesTag,
-    buildCascadeForBasicRange,
+    buildCascadeForRange,
     extendedRangeContainsTag,
-    extendedRangeMatchesTag,
-    RangeContainsTag,
+    extendedRangeStrictMatchesTag,
+    RangeTagComparator,
 } from './comparator';
 import { LanguagePriorityRanges, Match, SupportedTags } from './model';
-import { isValidBasicRange, isValidExtendedRange } from './validators';
+import { isValidBasicRange, isValidExtendedRange, RangeValidator } from './validators';
 
 export * from './model';
 
@@ -19,7 +19,7 @@ const removeDupes = (matches: Match[]): Match[] => {
     return [...new Set(matches)];
 };
 
-const generateFilter = (matchFn: RangeContainsTag) => {
+const generateFilter = (matchFn: RangeTagComparator) => {
     return (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges): Match[] => {
         if (!languageRanges) {
             return [];
@@ -43,61 +43,37 @@ export const basicFilter: Filter = generateFilter(basicRangeContainsTag);
 
 export const extendedFilter: Filter = generateFilter(extendedRangeContainsTag);
 
-export const basicLookup: Lookup = (
-    supportedTags: SupportedTags,
-    languageRanges: LanguagePriorityRanges,
-): Match | undefined => {
-    if (!languageRanges) {
-        return undefined;
-    }
-    //Early exit makes more sense here, so use vanilla for loop
-    for (let range of languageRanges) {
-        if (!range || !isValidBasicRange(range) || range === WILDCARD) {
-            continue;
+export const generateLookup = (rangeValidator: RangeValidator, rangeTagComparator: RangeTagComparator): Lookup => {
+    return (supportedTags: SupportedTags, languageRanges: LanguagePriorityRanges): Match | undefined => {
+        if (!languageRanges) {
+            return undefined;
         }
-        const cascadingRanges = buildCascadeForBasicRange(range);
-        for (let cascadingRange of cascadingRanges) {
-            const matchingTag = supportedTags.find((tag) => basicRangeStrictMatchesTag(cascadingRange, tag));
-            if (matchingTag) {
-                return {
-                    matchedRange: range,
-                    matchingTag: matchingTag,
-                };
-            }
-        }
-    }
-
-    return undefined;
-};
-
-export const extendedLookup: Lookup = (
-    supportedTags: SupportedTags,
-    languageRanges: LanguagePriorityRanges,
-): Match | undefined => {
-    if (!languageRanges) {
-        return undefined;
-    }
-    //Early exit makes more sense here, so use vanilla for loop
-    for (let range of languageRanges) {
-        if (!range || !isValidExtendedRange(range) || range === WILDCARD) {
-            continue;
-        }
-        const cascadingRanges = buildCascadeForBasicRange(range);
-        for (let cascadingRange of cascadingRanges) {
-            if (cascadingRange === WILDCARD) {
+        //Early exit makes more sense here, so use vanilla for loop
+        for (let range of languageRanges) {
+            if (!range || !rangeValidator(range) || range === WILDCARD) {
                 continue;
             }
-            const strictMatchingTag = supportedTags.find((tag) => extendedRangeMatchesTag(cascadingRange, tag, false));
-            if (strictMatchingTag) {
-                return {
-                    matchedRange: range,
-                    matchingTag: strictMatchingTag,
-                };
+            const cascadingRanges = buildCascadeForRange(range);
+            for (let cascadingRange of cascadingRanges) {
+                if (cascadingRange === WILDCARD) {
+                    continue;
+                }
+                const strictMatchingTag = supportedTags.find((tag) => rangeTagComparator(cascadingRange, tag));
+                if (strictMatchingTag) {
+                    return {
+                        matchedRange: range,
+                        matchingTag: strictMatchingTag,
+                    };
+                }
             }
         }
-    }
 
-    return undefined;
+        return undefined;
+    };
 };
+
+export const basicLookup: Lookup = generateLookup(isValidBasicRange, basicRangeStrictMatchesTag);
+
+export const extendedLookup: Lookup = generateLookup(isValidExtendedRange, extendedRangeStrictMatchesTag);
 
 const WILDCARD = '*';
