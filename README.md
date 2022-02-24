@@ -28,6 +28,12 @@ Huge thanks to https://github.com/wooorm for conceptual help and test cases.
   //   matchedRange: 'zh-Hant-CN-x-private1-private2',
   //   matchingTag: 'zh-Hant'
   // }
+
+  console.log(extendedLookup(['en-CH-1991', 'de-CH'], ['de-*-1991']));
+  // {
+  //   matchedRange: 'de-*-1991',
+  //   matchingTag: 'de-CH'
+  // }
 ```
 
 ## Caveats
